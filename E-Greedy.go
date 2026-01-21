@@ -115,7 +115,7 @@ func main() {
 		rewardsOverTime = append(rewardsOverTime, opts.LineData{Value: runningMeanReward})
 
 		if (epsilon > 0.00001){
-			epsilon -= 0.00001
+			epsilon -= 0.00001 // This is an arbitrary value to decrease epsilon over time
 		}
 
 		fmt.Printf("Trial %d: Pulled arm %d, Reward: %.2f, Running Avg Reward: %.2f\n", i+1, selectedArm, reward, runningMeanReward)
