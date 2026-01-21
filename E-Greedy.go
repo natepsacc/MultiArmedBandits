@@ -86,7 +86,7 @@ func selectArm(epsilon float64, arms int, meanReward []float64,) int {
 func main() {
 
 	arms := 100
-	epsilon := 0.2
+	epsilon := 0.5
 	trials := 10000
 
 	runningMeanReward := 0.0
@@ -114,6 +114,9 @@ func main() {
 
 		rewardsOverTime = append(rewardsOverTime, opts.LineData{Value: runningMeanReward})
 
+		if (epsilon > 0.00001){
+			epsilon -= 0.00001
+		}
 
 		fmt.Printf("Trial %d: Pulled arm %d, Reward: %.2f, Running Avg Reward: %.2f\n", i+1, selectedArm, reward, runningMeanReward)
 	}
