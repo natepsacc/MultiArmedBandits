@@ -114,7 +114,7 @@ func main() {
 		thisTrialsTheta := make([]mat.VecDense, n_arms)
 
 		for armIndex, arm := range arms {
-			z_k := contextVector
+
 			// Estimate the weights (theta) for the arm
 			// Estimate the weight vector (the best guess of how context matters)
 			// theta_hat_k = inverse(A_k) * b_k
@@ -129,14 +129,14 @@ func main() {
 			theta.MulVec(&A_inv, arm.B)
 			thisTrialsTheta[armIndex] = theta
 
-			mean := mat.Dot(&theta, z_k)
+			mean := mat.Dot(&theta, contextVector)
 
 			// Quntify our uncertainty about that prediction
 			// uncertainty = sqrt(x^T * A_inv * x)
 			var temp mat.VecDense
-			temp.MulVec(&A_inv, z_k)
+			temp.MulVec(&A_inv, contextVector)
 
-			uncertainty := math.Sqrt(mat.Dot(z_k, &temp))
+			uncertainty := math.Sqrt(mat.Dot(contextVector, &temp))
 			thisTrialsUncertainty[armIndex] = uncertainty
 
 			// Upper confidence bound for this arm
