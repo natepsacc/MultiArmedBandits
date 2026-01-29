@@ -82,10 +82,10 @@ func outerProduct(a, b mat.Vector) mat.Matrix {
 
 func main() {
 
-	n_trials := 100 // num trials
-	n_arms := 5     // num arms
-	d := 3          // num dimensions
-	lambda := 0.1   // regularization parameter
+	n_trials := 1000 // num trials
+	n_arms := 50     // num arms
+	d := 30          // num dimensions
+	lambda := 0.1    // regularization parameter
 
 	trueTheta := make([]*mat.VecDense, n_arms)
 	for k := 0; k < n_arms; k++ {
@@ -126,15 +126,15 @@ func main() {
 			}
 
 			var theta mat.VecDense
-			theta.MulVec(&A_inv, arm.B)
+			theta.MulVec(&A_inv, arm.B) //  inverse of accumulated outer product from past rewards by the context vectors seen on this arm
 			thisTrialsTheta[armIndex] = theta
 
-			mean := mat.Dot(&theta, contextVector)
+			mean := mat.Dot(&theta, contextVector) // this dot prod is inv accum outer prod of past rewards by current context vector
 
 			// Quntify our uncertainty about that prediction
 			// uncertainty = sqrt(x^T * A_inv * x)
 			var temp mat.VecDense
-			temp.MulVec(&A_inv, contextVector)
+			temp.MulVec(&A_inv, contextVector) // multiply accum outer prod inverse by current context vector
 
 			uncertainty := math.Sqrt(mat.Dot(contextVector, &temp))
 			thisTrialsUncertainty[armIndex] = uncertainty
@@ -160,7 +160,7 @@ func main() {
 		// update the kit for that arm, A_K and B_K
 		selectedArmStruct := &arms[selectedArm]
 
-		// get outer product of context vector with itself
+		// get outer product of context vector with itself  --  we are accumulating x*x^T and updating og arm with this product.
 		A_chosen := outerProduct(contextVector, contextVector)
 
 		var A_updated mat.Dense
