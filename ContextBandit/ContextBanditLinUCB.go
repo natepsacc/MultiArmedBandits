@@ -4,9 +4,13 @@ import (
 	"fmt"
 	"math"
 	"math/rand"
+	"os"
 	"sync"
 	"time"
 
+	"github.com/go-echarts/go-echarts/v2/charts"
+	"github.com/go-echarts/go-echarts/v2/opts"
+	"github.com/go-echarts/go-echarts/v2/types"
 	"gonum.org/v1/gonum/mat"
 )
 
@@ -87,14 +91,44 @@ func outerProduct(a, b mat.Vector) mat.Matrix {
 	return result
 }
 
+func PlotRegret(regretOverTime []float64) {
+	line := charts.NewLine()
+	xs := make([]opts.LineData, len(regretOverTime))
+	ys := make([]opts.LineData, len(regretOverTime))
+
+	for i := range regretOverTime {
+		xs[i] = opts.LineData{Value: i}
+		ys[i] = opts.LineData{Value: regretOverTime[i]}
+	}
+
+	line.SetGlobalOptions(
+		charts.WithInitializationOpts(opts.Initialization{
+			Theme: types.ThemeInfographic,
+		}),
+		charts.WithTitleOpts(opts.Title{
+			Title: "LinUCB Regret per Trials",
+		}),
+	)
+
+	line.AddSeries("Regret per Trial", ys).
+		SetXAxis(ys)
+
+	f, err := os.Create("linucb_regret.html")
+	if err != nil {
+		panic(err)
+	}
+	defer f.Close()
+	line.Render(f)
+}
+
 func main() {
 
 	startTime := time.Now()
 
-	n_trials := 1000 // num trials
-	n_arms := 50     // num arms
-	d := 30          // num dimensions
-	lambda := 0.1    // regularization parameter
+	n_trials := 500 // num trials
+	n_arms := 100   // num arms
+	d := 30         // num dimensions
+	lambda := 0.1   // regularization parameter
 
 	trueTheta := make([]*mat.VecDense, n_arms)
 
@@ -105,6 +139,7 @@ func main() {
 		}
 		trueTheta[k] = v
 	}
+	regretOverTime := make([]float64, n_trials)
 
 	arms := makeArms(n_arms, d, lambda)
 
@@ -159,7 +194,7 @@ func main() {
 				thisTrialsUncertainty[armIndex] = uncertainty
 
 				// Upper confidence bound for this arm
-				alpha := 1.0 // exploration parameter
+				alpha := 0.5 // exploration parameter
 				p_k := mean + alpha*uncertainty
 				thisTrialsPK[armIndex] = p_k
 			}(armIndex, arm)
@@ -210,10 +245,12 @@ func main() {
 		}
 
 		regret := bestReward - mat.Dot(trueTheta[selectedArm], contextVector)
+		regretOverTime[trial] = regret
+
 		fmt.Printf("Trial %d: Selected Arm %d, Reward %.3f, Optimal Arm %d, Regret %.3f\n", trial, selectedArm, reward, optimal, regret)
 
 	}
-
+	PlotRegret(regretOverTime)
 	elapsed := time.Since(startTime)
 	fmt.Printf("Execution Time: %s\n", elapsed)
 }
