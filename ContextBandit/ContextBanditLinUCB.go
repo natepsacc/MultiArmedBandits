@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"math"
 	"math/rand"
+	"time"
 
 	"gonum.org/v1/gonum/mat"
 )
@@ -81,6 +82,8 @@ func outerProduct(a, b mat.Vector) mat.Matrix {
 }
 
 func main() {
+
+	startTime := time.Now()
 
 	n_trials := 1000 // num trials
 	n_arms := 50     // num arms
@@ -191,5 +194,8 @@ func main() {
 		fmt.Printf("Trial %d: Selected Arm %d, Reward %.3f, Optimal Arm %d, Regret %.3f\n", trial, selectedArm, reward, optimal, regret)
 
 	}
+
+	elapsed := time.Since(startTime)
+	fmt.Printf("Execution Time: %s\n", elapsed)
 
 }
