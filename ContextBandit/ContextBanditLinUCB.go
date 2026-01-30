@@ -125,10 +125,10 @@ func main() {
 
 	startTime := time.Now()
 
-	n_trials := 500 // num trials
-	n_arms := 100   // num arms
-	d := 30         // num dimensions
-	lambda := 0.1   // regularization parameter
+	n_trials := 50000 // num trials
+	n_arms := 1000    // num arms
+	d := 300          // num dimensions
+	lambda := 0.1     // regularization parameter
 
 	trueTheta := make([]*mat.VecDense, n_arms)
 
@@ -213,6 +213,7 @@ func main() {
 		// Simulate observing a reward for the selected arm
 		// r = θ*_kᵀ x + noise
 		reward := mat.Dot(trueTheta[selectedArm], contextVector) + rand.NormFloat64()*0.1
+		reward = math.Max(-1, math.Min(1, reward))
 
 		// update the kit for that arm, A_K and B_K
 		selectedArmStruct := &arms[selectedArm]
@@ -245,6 +246,7 @@ func main() {
 		}
 
 		regret := bestReward - mat.Dot(trueTheta[selectedArm], contextVector)
+
 		regretOverTime[trial] = regret
 
 		fmt.Printf("Trial %d: Selected Arm %d, Reward %.3f, Optimal Arm %d, Regret %.3f\n", trial, selectedArm, reward, optimal, regret)
