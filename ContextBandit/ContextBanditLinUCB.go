@@ -132,7 +132,6 @@ func main() {
 			// Estimate the weight vector (the best guess of how context matters)
 			// theta_hat_k = inverse(A_k) * b_k
 			// theta_hat_k = invert(A_k) * b_k
-
 			go func(armIndex int, arm struct {
 				A mat.Matrix
 				B mat.Vector
@@ -164,8 +163,10 @@ func main() {
 				p_k := mean + alpha*uncertainty
 				thisTrialsPK[armIndex] = p_k
 			}(armIndex, arm)
-
 		}
+
+		wg.Wait()
+
 		// get max p_k across arms and select that arm
 		selectedArm := 0
 		for armIndex, p_k := range thisTrialsPK {
