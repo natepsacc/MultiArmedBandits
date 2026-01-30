@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"math"
 	"math/rand"
+	"sync"
+	"time"
 
 	"gonum.org/v1/gonum/mat"
 )
@@ -23,6 +25,11 @@ import (
 
 // lets assume we are recommending from a set of N_arms arms, where each arm is a article to reccomend.
 // For my mental model, lets assume the dimensions represent user interest, user age, user device type.
+
+type armType struct {
+	A mat.Matrix
+	B mat.Vector
+}
 
 func CreateArm(d int, lambda float64) (mat.Matrix, mat.Vector) {
 	A := mat.NewDense(d, d, nil)
@@ -82,12 +89,15 @@ func outerProduct(a, b mat.Vector) mat.Matrix {
 
 func main() {
 
+	startTime := time.Now()
+
 	n_trials := 1000 // num trials
 	n_arms := 50     // num arms
 	d := 30          // num dimensions
 	lambda := 0.1    // regularization parameter
 
 	trueTheta := make([]*mat.VecDense, n_arms)
+
 	for k := 0; k < n_arms; k++ {
 		v := mat.NewVecDense(d, nil)
 		for i := 0; i < d; i++ {
@@ -113,36 +123,47 @@ func main() {
 		thisTrialsUncertainty := make([]float64, n_arms)
 		thisTrialsTheta := make([]mat.VecDense, n_arms)
 
+		var wg sync.WaitGroup
+		wg.Add(n_arms)
+
 		for armIndex, arm := range arms {
 
 			// Estimate the weights (theta) for the arm
 			// Estimate the weight vector (the best guess of how context matters)
 			// theta_hat_k = inverse(A_k) * b_k
 			// theta_hat_k = invert(A_k) * b_k
-			var A_inv mat.Dense
-			err := A_inv.Inverse(arm.A)
-			if err != nil {
-				panic("Matrix inversion failed")
-			}
 
-			var theta mat.VecDense
-			theta.MulVec(&A_inv, arm.B) //  inverse of accumulated outer product from past rewards by the context vectors seen on this arm
-			thisTrialsTheta[armIndex] = theta
+			go func(armIndex int, arm struct {
+				A mat.Matrix
+				B mat.Vector
+			}) {
+				defer wg.Done()
 
-			mean := mat.Dot(&theta, contextVector) // this dot prod is inv accum outer prod of past rewards by current context vector
+				var A_inv mat.Dense
+				err := A_inv.Inverse(arm.A)
+				if err != nil {
+					panic("Matrix inversion failed")
+				}
 
-			// Quntify our uncertainty about that prediction
-			// uncertainty = sqrt(x^T * A_inv * x)
-			var temp mat.VecDense
-			temp.MulVec(&A_inv, contextVector) // multiply accum outer prod inverse by current context vector
+				var theta mat.VecDense
+				theta.MulVec(&A_inv, arm.B) //  inverse of accumulated outer product from past rewards by the context vectors seen on this arm
+				thisTrialsTheta[armIndex] = theta
 
-			uncertainty := math.Sqrt(mat.Dot(contextVector, &temp))
-			thisTrialsUncertainty[armIndex] = uncertainty
+				mean := mat.Dot(&theta, contextVector) // this dot prod is inv accum outer prod of past rewards by current context vector
 
-			// Upper confidence bound for this arm
-			alpha := 1.0 // exploration parameter
-			p_k := mean + alpha*uncertainty
-			thisTrialsPK[armIndex] = p_k
+				// Quntify our uncertainty about that prediction
+				// uncertainty = sqrt(x^T * A_inv * x)
+				var temp mat.VecDense
+				temp.MulVec(&A_inv, contextVector) // multiply accum outer prod inverse by current context vector
+
+				uncertainty := math.Sqrt(mat.Dot(contextVector, &temp))
+				thisTrialsUncertainty[armIndex] = uncertainty
+
+				// Upper confidence bound for this arm
+				alpha := 1.0 // exploration parameter
+				p_k := mean + alpha*uncertainty
+				thisTrialsPK[armIndex] = p_k
+			}(armIndex, arm)
 
 		}
 		// get max p_k across arms and select that arm
@@ -192,4 +213,6 @@ func main() {
 
 	}
 
+	elapsed := time.Since(startTime)
+	fmt.Printf("Execution Time: %s\n", elapsed)
 }
