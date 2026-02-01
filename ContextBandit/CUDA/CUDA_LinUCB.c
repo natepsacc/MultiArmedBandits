@@ -19,7 +19,7 @@ int CreateArmCublas(cublasHandle_t handle, int d, float lambda, float **d_A, flo
 
     for (int i = 0; i < d; i++) {
         for (int j = 0; j < d; j++) {
-            h_A[i * d + j] = (i == j) ? lambda : 0.0f;
+            h_A[j * d + i] = (i == j) ? lambda : 0.0f;
         }
         h_B[i] = 0.0f;
     }
