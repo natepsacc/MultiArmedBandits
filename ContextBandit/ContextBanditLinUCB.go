@@ -87,7 +87,7 @@ func main() {
 
 	n_trials := 1000 // num trials
 	n_arms := 50     // num arms
-	d := 30          // num dimensions
+	d := 300         // num dimensions
 	lambda := 0.1    // regularization parameter
 
 	trueTheta := make([]*mat.VecDense, n_arms)
