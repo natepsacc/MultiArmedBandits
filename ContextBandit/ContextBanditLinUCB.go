@@ -85,10 +85,10 @@ func main() {
 
 	startTime := time.Now()
 
-	n_trials := 1000 // num trials
-	n_arms := 50     // num arms
-	d := 300         // num dimensions
-	lambda := 0.1    // regularization parameter
+	n_trials := 10000 // num trials
+	n_arms := 10      // num arms
+	d := 100          // num dimensions
+	lambda := 0.1     // regularization parameter
 
 	trueTheta := make([]*mat.VecDense, n_arms)
 	for k := 0; k < n_arms; k++ {
