@@ -206,7 +206,6 @@ int main (void){
         // cudaMalloc((void**)&d_X, n_dimensions * sizeof(float));
         cudaMemcpy(d_X, h_x, n_dimensions * sizeof(float), cudaMemcpyHostToDevice);
 
-
         // compute p_k for each arm
         for (int k = 0; k < n_arms; k++) {
             // copy A to A_copy
@@ -278,7 +277,7 @@ int main (void){
         }
 
     }
-    
+
     free(h_x);
     cudaFree(d_ipiv);   
     cudaFree(d_X);
