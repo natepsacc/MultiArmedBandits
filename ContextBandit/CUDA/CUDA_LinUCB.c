@@ -83,7 +83,7 @@ int makeTrueThetaCublas(float **trueTheta, int n_arms, int n_dimensions) {
 
         float *h_v = (float*)malloc(n_dimensions * sizeof(float));
         for (int i = 0; i < n_dimensions; i++) {
-            h_v[i] =randn(); 
+            h_v[i] =randn() / sqrtf((float)n_dimensions);
         }
 
         cudaMemcpy(d_v, h_v, n_dimensions * sizeof(float), cudaMemcpyHostToDevice);
