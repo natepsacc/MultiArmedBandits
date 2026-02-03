@@ -138,8 +138,8 @@ int main (void){
     srand(42);
 
     const int n_trials = 10000;
-    const int n_arms = 75;
-    const int n_dimensions = 50;
+    const int n_arms = 10;
+    const int n_dimensions = 200;
     const float lambda = 0.1f;
     const float alpha = 1.0f;
 
