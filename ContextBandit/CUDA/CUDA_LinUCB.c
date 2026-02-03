@@ -195,7 +195,16 @@ int main (void){
 
     for (int t = 0; t < n_trials; t++) {
 
-        makeSyntheticContextVectorCublas(cublas_handle, n_dimensions, &d_X);
+        // makeSyntheticContextVectorCublas(cublas_handle, n_dimensions, &d_X);
+        float *h_x = (float*)malloc(n_dimensions * sizeof(float));
+        for (int i = 0; i < n_dimensions; i++) {
+            h_x[i] = (float)rand() / RAND_MAX;
+        }
+
+        // cudaMalloc((void**)&d_X, n_dimensions * sizeof(float));
+        cudaMemcpy(d_X, h_x, n_dimensions * sizeof(float), cudaMemcpyHostToDevice);
+
+        free(h_x);
 
         // compute p_k for each arm
         for (int k = 0; k < n_arms; k++) {
