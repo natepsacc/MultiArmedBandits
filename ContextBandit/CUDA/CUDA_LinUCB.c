@@ -97,21 +97,19 @@ int makeTrueThetaCublas(float **trueTheta, int n_arms, int n_dimensions) {
 }
 
 int invertMatrixCuSolver(cusolverDnHandle_t solver, int d,
+            int *d_ipiv,
             float *d_A,      
             float *d_A_inv,   
             float *d_work,    
             int work_size,   
             int *d_info)
 {
-    int *d_ipiv;
-    cudaMalloc((void**)&d_ipiv, d * sizeof(int));
 
     cusolverDnSgetrf(solver, d, d, d_A, d, d_work, d_ipiv, d_info);
 
     // signature: solver, trans, n, nrhs, A, lda, ipiv, B, ldb, info
     cusolverDnSgetrs(solver, CUBLAS_OP_N, d, d, d_A, d, d_ipiv, d_A_inv, d, d_info);
 
-    cudaFree(d_ipiv);
     return 0;
 }
 
@@ -154,6 +152,8 @@ int main (void){
     float **d_As, **d_Bs;
     makeArmsCublas(cublas_handle, n_arms, n_dimensions, lambda, &d_As, &d_Bs); 
 
+    int *d_ipiv = NULL;
+    
     float *d_X =NULL;
     float *d_A_copy = NULL;
     float *d_A_inv = NULL;
@@ -163,6 +163,7 @@ int main (void){
     float *d_bupdate = NULL;
     int *d_info = NULL;
 
+    cudaMalloc((void**)&d_ipiv, n_dimensions * sizeof(int));
     cudaMalloc((void**)&d_X, n_dimensions * sizeof(float));
     cudaMalloc((void**)&d_A_copy, n_dimensions * n_dimensions * sizeof(float));
     cudaMalloc((void**)&d_A_inv, n_dimensions * n_dimensions * sizeof(float));
@@ -222,7 +223,7 @@ int main (void){
 
 
             // invert A_copy to A_inv
-            invertMatrixCuSolver(solver_handle, n_dimensions, d_A_copy, d_A_inv, d_work, work_size, d_info);
+            invertMatrixCuSolver(solver_handle, n_dimensions, d_ipiv, d_A_copy, d_A_inv, d_work, work_size, d_info);
 
             // compute theta = A_inv * B
             matVecCublas(cublas_handle, d_A_inv, d_Bs[k], d_theta, n_dimensions);
@@ -277,7 +278,7 @@ int main (void){
         }
 
     }
-
+    cudaFree(d_ipiv);   
     cudaFree(d_X);
     cudaFree(d_A_copy);
     cudaFree(d_A_inv);
